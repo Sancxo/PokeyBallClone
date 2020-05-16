@@ -10,7 +10,7 @@
 <body>
     <!-- Three.min.js -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.116.1/build/three.min.js"></script>
-
+    
     <!-- Game -->
     <script>
         //variables
@@ -22,6 +22,8 @@
         let spherePositionX = -1;
         let spherePositionZ = -3;
 
+        let loader = new THREE.TextureLoader();
+        
         init = ( ) => {
 
             //initialisation
@@ -64,9 +66,10 @@
             cylinder.receiveShadow = true;
             scene.add(cylinder);
 
+            let texture = loader.load('https://tse2.mm.bing.net/th?id=OIP.x5S8SmTXkE2Jt9QbM6WHdAHaE8&pid=Api');
             sphere = new THREE.Mesh(
                 new THREE.SphereGeometry(0.25, 32, 24),
-                new THREE.MeshLambertMaterial({color: 0xff0000})
+                new THREE.MeshLambertMaterial({map : texture})
             );
             sphere.position.set(spherePositionX, spherePositionY, spherePositionZ);
             sphere.castShadow = true;
@@ -96,7 +99,17 @@
             sphereUp = () => {
                 sphere.position.y ++;
                 camera.position.y ++;
+                sphere.rotation.x -= 0.5;
                 requestAnimationFrame(sphereUp);
+            };
+            sphereDown = () => {
+                sphere.position.y --;
+                camera.position.y --;
+                sphere.position.y --;
+                camera.position.y --;
+                sphere.rotation.x ++;
+
+                requestAnimationFrame(sphereDown);
             };
 
             window.addEventListener('mousedown', swipeSphere = (event) => {
@@ -113,6 +126,8 @@
                 swipe = false;
                 sphereReset();
                 sphereUp();
+                setTimeout(sphereDown, 3000);
+                spherePositionY = sphere.position.y;
             });
             window.addEventListener('touchend', swipeSphere = (event) => {
                 event.preventDefault();
@@ -125,22 +140,22 @@
                 if (swipe && event.pageY < 430 && event.pageY > 330) {
                     sphere.position.y -= event.movementY / 100;
                     sphere.position.z -= event.movementY / 100;
-                    sphere.rotation.x -= event.movementY / 100;
+                    sphere.rotation.x += event.movementY / 100;
                 }
-                if(event.pageY <= 330) {
-                    sphere.position.set(-1, spherePositionY, -3);
-                }
+                // if(event.pageY <= 330) {
+                //     sphere.position.set(-1, spherePositionY, -3);
+                // }
             });
             window.addEventListener('touchmove', swipeSphere = (event) => {
                 event.preventDefault();
                 if (swipe && event.pageY < 430 && event.pageY > 330) {
                     sphere.position.y -= event.movementY / 100;
                     sphere.position.z -= event.movementY / 100;
-                    sphere.rotation.x -= event.movementY / 100;
+                    sphere.rotation.x += event.movementY / 100;
                 }
-                if(event.pageY <= 330) {
-                    sphere.position.set(-1, spherePositionY, -3);
-                }
+                // if(event.pageY <= 330) {
+                //     sphere.position.set(-1, spherePositionY, -3);
+                // }
             });
 
             animate();
