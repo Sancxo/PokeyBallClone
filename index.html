@@ -18,6 +18,7 @@
         let floor, fog;
         let cylinder, sphere;
         let dirLight, ambLight, pointLight;
+        let spherePositionY = 5;
 
         init = ( ) => {
 
@@ -65,7 +66,7 @@
                 new THREE.SphereGeometry(0.25, 32, 24),
                 new THREE.MeshLambertMaterial({color: 0xff0000})
             );
-            sphere.position.set(-1, 5, -3);
+            sphere.position.set(-1, spherePositionY, -3);
             sphere.castShadow = true;
             sphere.receiveShadow = true;
             scene.add(sphere);
@@ -86,12 +87,11 @@
             scene.add(dirLight);
 
             //controls
-            let power = 0;
             let swipe = false;
             window.addEventListener('mousedown', swipeSphere = (event) => {
                     event.preventDefault();
                     swipe = true;
-                    console.log(event.clientY);
+                    console.log(event.pageY);
             });
             window.addEventListener('touchstart', swipeSphere = (event) => {
                     event.preventDefault();
@@ -108,22 +108,26 @@
             });
             window.addEventListener('mousemove', swipeSphere = (event) => {
                 event.preventDefault();
-                if (swipe && event.clientY < 430 && event.clientY > 330) {
+                if (swipe && event.pageY < 430 && event.pageY > 330) {
                     sphere.position.y -= event.movementY / 100;
                     sphere.position.z -= event.movementY / 100;
                     sphere.rotation.x -= event.movementY / 100;
-                    console.log(event.clientY);
-                    power += 1;
+                    console.log('PageY = ' + event.pageY);
+                }
+                if(event.pageY <= 330) {
+                    sphere.position.set(-1, spherePositionY, -3);
                 }
             });
             window.addEventListener('touchmove', swipeSphere = (event) => {
                 event.preventDefault();
-                if (swipe && event.clientY < 430 && event.clientY > 330) {
+                if (swipe && event.pageY < 430 && event.pageY > 330) {
                     sphere.position.y -= event.movementY / 100;
                     sphere.position.z -= event.movementY / 100;
                     sphere.rotation.x -= event.movementY / 100;
-                    console.log(event.clientY);
-                    power += 1;
+                    console.log(event.pageY);
+                }
+                if(event.pageY <= 330) {
+                    sphere.position.set(-1, spherePositionY, -3);
                 }
             });
 
