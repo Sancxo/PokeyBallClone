@@ -107,8 +107,8 @@
                 swipe = false;
             });
             window.addEventListener('mousemove', swipeSphere = (event) => {
+                event.preventDefault();
                 if (swipe && event.clientY < 430 && event.clientY > 330) {
-                    event.preventDefault();
                     sphere.position.y -= event.movementY / 100;
                     sphere.position.z -= event.movementY / 100;
                     sphere.rotation.x -= event.movementY / 100;
@@ -117,8 +117,8 @@
                 }
             });
             window.addEventListener('touchmove', swipeSphere = (event) => {
+                event.preventDefault();
                 if (swipe && event.clientY < 430 && event.clientY > 330) {
-                    event.preventDefault();
                     sphere.position.y -= event.movementY / 100;
                     sphere.position.z -= event.movementY / 100;
                     sphere.rotation.x -= event.movementY / 100;
