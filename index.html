@@ -4,63 +4,85 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pokey Ball</title>
-    <style>body {margin: 0; overflow: hidden;}
-    canvas{height: 100%; width: 100%;}</style>
+    <style>
+        body {margin: 0; overflow: hidden;}
+        canvas {height: 100%; width: 100%;}
+        #gameover {
+            font-size:36px; 
+            position: fixed; 
+            top: 50%; 
+            left: 41.5%;
+            color: red;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
+    <div id="gameover">Game Over ! <br />
+    <button onclick="location.reload();">Try again</button></div>  
+
     <!-- Three.min.js -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.116.1/build/three.min.js"></script>
-    
-    <!-- Game -->
+    <!-- GLTF loader-->
+    <script src="GLTFLoader.js"></script>
+
     <script>
-        //variables
         let renderer, camera, scene;
-        let floor, fog;
-        let cylinder, sphere;
+        let floor, sky, cylinder, sphere;
         let dirLight, ambLight, pointLight;
+
+        let canvasWidth = window.innerWidth;
+        let canvasHeight = window.innerHeight;
+
         let spherePositionY = 5;
         let spherePositionX = -1;
         let spherePositionZ = -3;
 
-        let loader = new THREE.TextureLoader();
-        
-        init = ( ) => {
+        let gameOverScreen = document.getElementById('gameover');
+        gameOverScreen.style.display = 'none';
 
-            //initialisation
+        let loader = new THREE.TextureLoader();
+        let gltfLoader = new THREE.GLTFLoader();
+
+        init = () => {
             renderer = new THREE.WebGLRenderer({antialias: true, alpha: true });
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setSize(canvasWidth, canvasHeight);
             renderer.setPixelRatio(devicePixelRatio);
-            document.body.appendChild(renderer.domElement);
+            document.body.appendChild(renderer.domElement).id = 'canvas';
 
-            window.addEventListener('resize', onWindowResize = () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-        
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(devicePixelRatio);    
-            }, false);
+            var rect = renderer.domElement.getBoundingClientRect();
+
 
             scene = new THREE.Scene();
 
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera = new THREE.PerspectiveCamera(75, canvasWidth / canvasHeight, 0.1, 1000);
             camera.position.set(0, spherePositionY, 0);
-            
+
             //Geometries
             floor = new THREE.Mesh(
-                new THREE.PlaneGeometry(1000, 1000), 
+                new THREE.PlaneGeometry(2000, 2000), 
                 new THREE.MeshLambertMaterial({color: 0x228B22})
             );
             floor.rotation.x = - Math.PI/2;
             floor.receiveShadow = true;
             scene.add(floor);
 
+            let skyTexture = loader.load('http://1.bp.blogspot.com/-UQKzAn6rqzo/U1DclitVGUI/AAAAAAAAcMQ/zyFPxCrYklU/s1600/Clouds+Wallpapers.jpg');
+            sky = new THREE.Mesh(
+                new THREE.SphereGeometry(1000, 32, 24),
+                new THREE.MeshBasicMaterial({map: skyTexture, side: THREE.BackSide})
+            );
+            sky.rotation.x = -15;
+            scene.add(sky);
+
+
             cylinder = new THREE.Mesh(
                 new THREE.CylinderGeometry(5, 5, 1000, 4), 
                 new THREE.MeshLambertMaterial({color: 0x8B4513})
             );
-            cylinder.position.set(0, 50, -15);
+            cylinder.position.set(0, 500, -15);
             cylinder.rotation.y = Math.PI / 7;
             cylinder.castShadow = true;
             cylinder.receiveShadow = true;
@@ -75,6 +97,22 @@
             sphere.castShadow = true;
             sphere.receiveShadow = true;
             scene.add(sphere);
+
+            //3D models
+            let oak, fir;
+            gltfLoader.load('/tree/scene.gltf', function(gltf) {
+                oak = gltf.scene;
+                scene.add(oak);
+                oak.scale.set(0.05, 0.05, 0.05);
+                oak.position.set(-75, 0, -100);
+            });
+
+            gltfLoader.load('/fir_tree/scene.gltf', function(gltf) {
+                fir = gltf.scene;
+                scene.add(fir);
+                fir.scale.set(0.1, 0.1, 0.1);
+                fir.position.set(100, 0, -150);
+            });
 
             // Lights
             ambLight = new THREE.AmbientLight(0x404040);
@@ -91,82 +129,94 @@
             scene.add(dirLight.target);
             scene.add(dirLight);
 
-            //controls
+            //mechanics & controls
             let swipe = false;
             sphereReset = () => {
                 sphere.position.set(spherePositionX, spherePositionY, spherePositionZ);
+                camera.position.set(0, spherePositionY, 0);
             };
             sphereUp = () => {
                 sphere.position.y ++;
                 camera.position.y ++;
                 sphere.rotation.x -= 0.5;
+                setTimeout(sphereDown, 3000);
+                setTimeout(sphereDown, 3250);
+                setTimeout(sphereDown, 3251);
+                setTimeout(sphereDown, 3751);
                 requestAnimationFrame(sphereUp);
             };
             sphereDown = () => {
-                sphere.position.y --;
-                camera.position.y --;
-                sphere.position.y --;
-                camera.position.y --;
-                sphere.rotation.x ++;
-
-                requestAnimationFrame(sphereDown);
+                sphere.position.y -= 0.5;
+                camera.position.y -= 0.5;
+                sphere.rotation.x += 0.25;
             };
 
-            window.addEventListener('mousedown', swipeSphere = (event) => {
+            //when swipe starts
+            window.addEventListener('mousedown', (event) => {
                 event.preventDefault();
                 swipe = true;
             });
-            window.addEventListener('touchstart', swipeSphere = (event) => {
-                event.preventDefault();
+            window.addEventListener('touchstart', (event) => {
                 swipe = true;
             });
 
+            //when swipping
+            window.addEventListener('mousemove', swipeSphere = (event) => {
+                event.preventDefault();
+                if (swipe && event.pageY > canvasHeight / 2 && event.pageY < canvasHeight / 1.7) {
+                    sphere.position.y -= event.movementY / 100;
+                    sphere.position.z -= event.movementY / 100;
+                    sphere.rotation.x += event.movementY / 100;
+                }
+            });
+            window.addEventListener('touchmove', swipeSphere = (event) => {
+                if (swipe && event.pageY > canvasHeight / 2 && event.pageY < canvasHeight / 1.7) {
+                    sphere.position.y -= event.movementY / 100;
+                    sphere.position.z -= event.movementY / 100;
+                    sphere.rotation.x += event.movementY / 100;
+                }
+            });
+
+            //when swipe ends
             window.addEventListener('mouseup', swipeSphere = (event) => {
                 event.preventDefault();
                 swipe = false;
                 sphereReset();
                 sphereUp();
-                setTimeout(sphereDown, 3000);
-                spherePositionY = sphere.position.y;
             });
             window.addEventListener('touchend', swipeSphere = (event) => {
-                event.preventDefault();
                 swipe = false;
                 sphereReset();
                 sphereUp();
             });
-            window.addEventListener('mousemove', swipeSphere = (event) => {
-                event.preventDefault();
-                if (swipe && event.pageY < 430 && event.pageY > 330) {
-                    sphere.position.y -= event.movementY / 100;
-                    sphere.position.z -= event.movementY / 100;
-                    sphere.rotation.x += event.movementY / 100;
-                }
-                // if(event.pageY <= 330) {
-                //     sphere.position.set(-1, spherePositionY, -3);
-                // }
-            });
-            window.addEventListener('touchmove', swipeSphere = (event) => {
-                event.preventDefault();
-                if (swipe && event.pageY < 430 && event.pageY > 330) {
-                    sphere.position.y -= event.movementY / 100;
-                    sphere.position.z -= event.movementY / 100;
-                    sphere.rotation.x += event.movementY / 100;
-                }
-                // if(event.pageY <= 330) {
-                //     sphere.position.set(-1, spherePositionY, -3);
-                // }
-            });
+
+            //if browser is resized
+            window.addEventListener('resize', onWindowResize = () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+        
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(devicePixelRatio);    
+            }, false);
 
             animate();
-
-        };
+        }
 
         animate = () => {
             requestAnimationFrame(animate);
 
             renderer.render(scene, camera);
-        };
+
+            if(sphere.position.y < 1.25) {
+                gameOver();
+            };
+        }
+        gameOver = () => {
+            gameOverScreen.style.display = 'block';
+            sphere.position.y = 1.25;
+            camera.position.y = 1.25;
+            sphere.rotation.x = 0;
+        }
 
         init();
     </script>
