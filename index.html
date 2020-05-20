@@ -28,8 +28,15 @@
 
     <script>
         let renderer, camera, scene;
-        let floor, sky, cylinder, sphere;
+        let floor, sky, trunk, sphere, sphereSpeed, spike;
         let dirLight, ambLight, pointLight;
+
+        let audioListener = new THREE.AudioListener();
+        let audioLoader = new THREE.AudioLoader();
+        let autoPlay = true;
+
+        let loader = new THREE.TextureLoader();
+        let gltfLoader = new THREE.GLTFLoader();
 
         let canvasWidth = window.innerWidth;
         let canvasHeight = window.innerHeight;
@@ -40,10 +47,6 @@
 
         let gameOverScreen = document.getElementById('gameover');
         gameOverScreen.style.display = 'none';
-
-        let loader = new THREE.TextureLoader();
-        let gltfLoader = new THREE.GLTFLoader();
-
         init = () => {
             renderer = new THREE.WebGLRenderer({antialias: true, alpha: true });
             renderer.shadowMap.enabled = true;
@@ -59,12 +62,26 @@
 
             camera = new THREE.PerspectiveCamera(75, canvasWidth / canvasHeight, 0.1, 1000);
             camera.position.set(0, spherePositionY, 0);
+            camera.add(audioListener);
+
+            let swish = new THREE.Audio(audioListener);
+            scene.add(swish);
+            audioLoader.load('swish-2.wav', function (audioBuffer) {
+                swish.setBuffer(audioBuffer);
+            });
+            let zboing = new THREE.Audio(audioListener);
+            scene.add(zboing);
+            audioLoader.load('zboing2.wav', function (audioBuffer) {
+                zboing.setBuffer(audioBuffer);
+            });
 
             //Geometries
+            let grass = loader.load('http://1.bp.blogspot.com/-GyfVBg3Zgmo/U7vL2QW0eMI/AAAAAAAAFd4/hRjZv22Imb8/w1200-h630-p-nu/%28GRASS+4%29+seamless+turf+lawn+green+ground+field+texture.jpg');
             floor = new THREE.Mesh(
                 new THREE.PlaneGeometry(2000, 2000), 
-                new THREE.MeshLambertMaterial({color: 0x228B22})
+                new THREE.MeshLambertMaterial({map: grass})
             );
+            grass.repeat.set(512, 512);
             floor.rotation.x = - Math.PI/2;
             floor.receiveShadow = true;
             scene.add(floor);
@@ -78,15 +95,15 @@
             scene.add(sky);
 
 
-            cylinder = new THREE.Mesh(
-                new THREE.CylinderGeometry(5, 5, 1000, 4), 
+            trunk = new THREE.Mesh(
+                new THREE.BoxGeometry(7, 1000, 7), 
                 new THREE.MeshLambertMaterial({color: 0x8B4513})
             );
-            cylinder.position.set(0, 500, -15);
-            cylinder.rotation.y = Math.PI / 7;
-            cylinder.castShadow = true;
-            cylinder.receiveShadow = true;
-            scene.add(cylinder);
+            trunk.position.set(0, 500, -15);
+            trunk.rotation.y = - Math.PI / 7;
+            trunk.castShadow = true;
+            trunk.receiveShadow = true;
+            scene.add(trunk);
 
             let texture = loader.load('https://tse2.mm.bing.net/th?id=OIP.x5S8SmTXkE2Jt9QbM6WHdAHaE8&pid=Api');
             sphere = new THREE.Mesh(
@@ -98,21 +115,37 @@
             sphere.receiveShadow = true;
             scene.add(sphere);
 
-            //3D models
-            let oak, fir;
-            gltfLoader.load('/tree/scene.gltf', function(gltf) {
-                oak = gltf.scene;
-                scene.add(oak);
-                oak.scale.set(0.05, 0.05, 0.05);
-                oak.position.set(-75, 0, -100);
-            });
+            spike = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.033, 0.01, 1),
+                new THREE.MeshLambertMaterial({color: 0xFFFF00})
+            );
+            scene.add(spike);
+            spike.position.set(-0.7, spherePositionY, -4);
+            spike.rotation.z = Math.PI / 2;
+            spike.rotation.y = Math.PI / 2.75;
+            spike.castShadow = true;
+            spike.receiveShadow = true;
 
-            gltfLoader.load('/fir_tree/scene.gltf', function(gltf) {
-                fir = gltf.scene;
-                scene.add(fir);
-                fir.scale.set(0.1, 0.1, 0.1);
-                fir.position.set(100, 0, -150);
-            });
+            //3D models
+            let firTree;
+            for (let i = 0; i <= Math.random() * 10 + 1; i++) {
+                gltfLoader.load('/fir_tree/scene.gltf', function(gltf) {
+                    firTree = gltf.scene;
+                    scene.add(firTree);
+                    firTree.rotation.y = Math.random() * 100;
+                    firTree.scale.set(0.2, 0.2, 0.2);
+                    firTree.position.set(Math.random() * 500, 0, Math.random() * -500 - 15);
+                });
+            };
+            for (let i = 0; i <= Math.random() * 10 + 1; i++) {
+                gltfLoader.load('/fir_tree/scene.gltf', function(gltf) {
+                    firTree = gltf.scene;
+                    scene.add(firTree);
+                    firTree.rotation.y = Math.random() * 100;
+                    firTree.scale.set(0.2, 0.2, 0.2);
+                    firTree.position.set(Math.random() * -500, 0, Math.random() * -500 - 15);
+                });
+            }
 
             // Lights
             ambLight = new THREE.AmbientLight(0x404040);
@@ -131,42 +164,70 @@
 
             //mechanics & controls
             let swipe = false;
+            let isSphereFree = false;
+            sphereSpeed = 2;
+            rotationSpeed = 1;
             sphereReset = () => {
                 sphere.position.set(spherePositionX, spherePositionY, spherePositionZ);
                 camera.position.set(0, spherePositionY, 0);
+                spike.position.set(-0.7, spherePositionY, -4);
+                spike.rotation.x = 0;
+                sphereSpeed = 2;
+                rotationSpeed = 1;
             };
             sphereUp = () => {
-                sphere.position.y ++;
-                camera.position.y ++;
-                sphere.rotation.x -= 0.5;
-                setTimeout(sphereDown, 3000);
-                setTimeout(sphereDown, 3250);
-                setTimeout(sphereDown, 3251);
-                setTimeout(sphereDown, 3751);
+                if(isSphereFree === false) return;
+                sphereSpeed -= 0.04;
+                rotationSpeed -= 0.02;
+                sphere.position.y += sphereSpeed;
+                camera.position.y += sphereSpeed;
+                sphere.rotation.x -= rotationSpeed;
+                spherePositionY = sphere.position.y;
                 requestAnimationFrame(sphereUp);
             };
             sphereDown = () => {
                 sphere.position.y -= 0.5;
                 camera.position.y -= 0.5;
                 sphere.rotation.x += 0.25;
+                requestAnimationFrame(sphereDown);
             };
 
             //when swipe starts
+            // 4. on clique à nouveau : si la balle est libre, la balle est recapturée et se fige au niveau 
+            //où elle était.
+
+            // 1. on clique: si la balle est capturée, la fonction swipe s'active pour permettre l'événement 
+            //n°2, sinon 4.
             window.addEventListener('mousedown', (event) => {
                 event.preventDefault();
-                swipe = true;
+                if (isSphereFree) {
+                    isSphereFree = false;
+                    sphereReset();
+                } else {
+                    swipe = true;
+                };
             });
             window.addEventListener('touchstart', (event) => {
-                swipe = true;
+                if (isSphereFree) {
+                    isSphereFree = false;
+                    spherePositionY = sphere.position.y;
+                    sphereReset();
+                } else {
+                    swipe = true;
+                };
             });
 
             //when swipping
+            // 2. on swipe en bas: si swipe est actif, la balle suit le mouvement de la souris et le tir se
+            //charge; sinon rien ne se passe.
             window.addEventListener('mousemove', swipeSphere = (event) => {
                 event.preventDefault();
                 if (swipe && event.pageY > canvasHeight / 2 && event.pageY < canvasHeight / 1.7) {
                     sphere.position.y -= event.movementY / 100;
                     sphere.position.z -= event.movementY / 100;
                     sphere.rotation.x += event.movementY / 100;
+                    spike.rotation.x += event.movementY / 125;
+                    spike.position.y -= event.movementY / 225;
                 }
             });
             window.addEventListener('touchmove', swipeSphere = (event) => {
@@ -174,20 +235,36 @@
                     sphere.position.y -= event.movementY / 100;
                     sphere.position.z -= event.movementY / 100;
                     sphere.rotation.x += event.movementY / 100;
+                    spike.rotation.x += event.movementY / 125;
+                    spike.position.y -= event.movementY / 225;
+
                 }
             });
 
             //when swipe ends
+            // 3. on relache le bouton du click: si swipe est actif, la balle est libérée et s'éjecte vers le
+            //haut, le swipe se désactive pour empêcher la balle de suivre la souris ; sinon rien ne se passe.
+
             window.addEventListener('mouseup', swipeSphere = (event) => {
                 event.preventDefault();
-                swipe = false;
-                sphereReset();
-                sphereUp();
+                if (swipe) {
+                    swipe = false;
+                    isSphereFree = true;
+                    swish.play();
+                    zboing.play();
+                    sphereReset();
+                    sphereUp();
+                };
             });
             window.addEventListener('touchend', swipeSphere = (event) => {
-                swipe = false;
-                sphereReset();
-                sphereUp();
+                if (swipe) {
+                    swipe = false;
+                    isSphereFree = true;
+                    swish.play();
+                    zboing.play();
+                    sphereReset();
+                    sphereUp();
+                };
             });
 
             //if browser is resized
