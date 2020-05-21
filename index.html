@@ -217,10 +217,11 @@
             //when swipe starts and when ball stops.
             window.addEventListener('mousedown', (event) => {
                 event.preventDefault();
+                console.log(spherePositionY);
                 if (isSphereFree) {
                     spherePositionY = sphere.position.y;
                     if (spherePositionY > 35 && spherePositionY < 49
-                    || spherePositionY > 77 && spherePositionY < 91
+                    || spherePositionY > 84 && spherePositionY < 98
                     || spherePositionY > 133 && spherePositionY < 161
                     || spherePositionY > 196 && spherePositionY < 210
                     || spherePositionY > 245 && spherePositionY < 259
@@ -240,10 +241,11 @@
                 };
             });
             window.addEventListener('touchstart', (event) => {
+                console.log(spherePositionY);
                 if (isSphereFree) {
                     spherePositionY = sphere.position.y;
                     if (spherePositionY > 35 && spherePositionY < 49 
-                    || spherePositionY > 77 && spherePositionY < 98
+                    || spherePositionY > 84 && spherePositionY < 98
                     || spherePositionY > 133 && spherePositionY < 161
                     || spherePositionY > 196 && spherePositionY < 210
                     || spherePositionY > 245 && spherePositionY < 259
