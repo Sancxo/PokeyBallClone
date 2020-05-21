@@ -9,8 +9,11 @@
         canvas {height: 100%; width: 100%;}
         #counter {
             font-size:36px; 
-            position: fixed; 
-            text-shadow: red 0 1px, red 1px 0, red 0 -1px, red -1px 0;
+            position: fixed;
+            left: 40%; 
+            color: red;
+            background-color: black;
+            /*text-shadow: black 0 1px, black 1px 0, black 0 -1px, black -1px 0;*/
         }
         #gameover {
             font-size:36px; 
@@ -53,7 +56,7 @@
         let spherePositionZ = -3;
 
         let counter = document.getElementById('counter');
-        let swipesLeft = 11;
+        let swipesLeft = 10;
 
         let gameOverScreen = document.getElementById('gameover');
         gameOverScreen.style.display = 'none';
