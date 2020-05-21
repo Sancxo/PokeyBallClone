@@ -147,7 +147,7 @@
             //3D models
             let firTree;
             for (let i = 0; i <= Math.random() * 10 + 1; i++) {
-                gltfLoader.load('/fir_tree/scene.gltf', function(gltf) {
+                gltfLoader.load('fir_tree/scene.gltf', function(gltf) {
                     firTree = gltf.scene;
                     scene.add(firTree);
                     firTree.rotation.y = Math.random() * 100;
@@ -156,7 +156,7 @@
                 });
             };
             for (let i = 0; i <= Math.random() * 10 + 1; i++) {
-                gltfLoader.load('/fir_tree/scene.gltf', function(gltf) {
+                gltfLoader.load('fir_tree/scene.gltf', function(gltf) {
                     firTree = gltf.scene;
                     scene.add(firTree);
                     firTree.rotation.y = Math.random() * 100;
