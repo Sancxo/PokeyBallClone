@@ -13,7 +13,6 @@
             left: 40%; 
             color: red;
             background-color: black;
-            /*text-shadow: black 0 1px, black 1px 0, black 0 -1px, black -1px 0;*/
         }
         #gameover {
             font-size:36px; 
@@ -23,6 +22,14 @@
             color: red;
             text-align: center;
         }
+        #winScreen {
+            font-size:36px; 
+            position: fixed; 
+            top: 50%; 
+            left: 41.5%;
+            color: white;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -30,6 +37,8 @@
     <div id="counter"></div>
     <div id="gameover">Game Over ! <br />
     <button onclick="location.reload(); isGameOver = false;">Try again</button></div>  
+    <div id="winScreen">Hurray ! <br />
+        You won !</div>
 
     <!-- Three.min.js -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.116.1/build/three.min.js"></script>
@@ -38,8 +47,8 @@
 
     <script>
         let renderer, camera, scene, isGameOver;
-        let floor, sky, trunk, sphere, sphereSpeed, spike;
-        let dirLight, ambLight, pointLight;
+        let floor, sky, trunk, nest, sphere, sphereSpeed, spike, spikeHole;
+        let dirLight, ambLight;
 
         let audioListener = new THREE.AudioListener();
         let audioLoader = new THREE.AudioLoader();
@@ -60,6 +69,8 @@
 
         let gameOverScreen = document.getElementById('gameover');
         gameOverScreen.style.display = 'none';
+        let winScreen = document.getElementById('winScreen');
+        winScreen.style.display = 'none';
 
         init = () => {
             renderer = new THREE.WebGLRenderer({antialias: true, alpha: true });
@@ -74,7 +85,7 @@
 
             scene = new THREE.Scene();
 
-            camera = new THREE.PerspectiveCamera(75, canvasWidth / canvasHeight, 0.1, 1000);
+            camera = new THREE.PerspectiveCamera(75, canvasWidth / canvasHeight, 0.1, 1500);
             camera.position.set(0, spherePositionY, 0);
             camera.add(audioListener);
 
@@ -121,7 +132,6 @@
                         trunk.position.set(0, trunkPositionY, -15);
                         trunk.rotation.y = - Math.PI / 7;
                         trunk.castShadow = true;
-                        trunk.receiveShadow = true;
                         scene.add(trunk);
                         trunkPositionY += 7;
                     };
@@ -129,6 +139,30 @@
                 };
                 trunkPositionY += 14;
             };
+
+            //nest
+            gltfLoader.load('nest/scene.gltf', function (gltf) {
+                nest = gltf.scene;
+                scene.add(nest);
+                nest.position.set(-7.5, 454.25, -14);
+                nest.scale.set(0.5, 0.5, 0.5);
+            });
+            //egg
+            let egg1, egg2;
+            gltfLoader.load('egg/scene.gltf', function(gltf) {
+                egg1 = gltf.scene;
+                scene.add(egg1);
+                egg1.position.set(0.75, 456, -15);
+                egg1.scale.set(0.01, 0.01, 0.01);
+                egg1.rotation.z = - Math.PI / 8;
+            });
+            gltfLoader.load('egg/scene.gltf', function(gltf) {
+                egg2 = gltf.scene;
+                scene.add(egg2);
+                egg2.position.set(0.25, 456, -16);
+                egg2.scale.set(0.01, 0.01, 0.01);
+                egg2.rotation.z = Math.PI / 16;
+            });
 
             //Ball
             let texture = loader.load('https://tse2.mm.bing.net/th?id=OIP.x5S8SmTXkE2Jt9QbM6WHdAHaE8&pid=Api');
@@ -151,6 +185,21 @@
             spike.rotation.y = Math.PI / 2.75;
             spike.castShadow = true;
             spike.receiveShadow = true;
+            
+            spikeHole = new THREE.Mesh(
+                new THREE.CircleGeometry(0.1),
+                new THREE.MeshBasicMaterial({color: 0x000000})
+            );
+            scene.add(spikeHole);
+            spikeHole.position.set(-1.1, spherePositionY, -10);
+            spikeHoleCreate = () => {
+                spikeHole = new THREE.Mesh(
+                    new THREE.CircleGeometry(0.1),
+                    new THREE.MeshBasicMaterial({color: 0x000000})
+                );
+                scene.add(spikeHole);
+                spikeHole.position.set(-1.1, spherePositionY, -10);
+            }
 
             //random trees
             let firTree;
@@ -184,7 +233,7 @@
             dirLight.shadow.camera.left = -107;
             dirLight.shadow.camera.top = 107; 
             dirLight.shadow.camera.bottom = -107;
-            dirLight.position.set(-10, 200, 0);
+            dirLight.position.set(0, 250, 0);
             scene.add(dirLight.target);
             scene.add(dirLight);
 
@@ -201,6 +250,7 @@
                 sphere.position.set(spherePositionX, spherePositionY, spherePositionZ);
                 camera.position.set(0, spherePositionY, 0);
                 spikeReset();
+                spikeHoleCreate();
                 sphereSpeed = 2;
                 rotationSpeed = 1;
             };
@@ -309,7 +359,7 @@
                     swish.play();
                     zboing.play();
                     sphereReset();
-                    spikeReset();
+                    spike.position.y = -10;
                     sphereUp();
                     swipesLeft --;
                 };
@@ -323,7 +373,7 @@
                     swish.play();
                     zboing.play();
                     sphereReset();
-                    spikeReset();
+                    spike.position.y = -10;
                     sphereUp();
                     swipesLeft --;
                 };
@@ -349,7 +399,10 @@
 
             if(sphere.position.y <= 0) {
                 gameOver();
-            };
+            } else if (sphere.position.y > 456) {
+                winScreen.style.display = 'block';
+                isGameOver = true;
+            }
         }
         
         gameOver = () => {
