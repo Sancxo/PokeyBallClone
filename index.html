@@ -7,6 +7,10 @@
     <style>
         body {margin: 0; overflow: hidden;}
         canvas {height: 100%; width: 100%;}
+        #counter {
+            font-size:36px; 
+            position: fixed; 
+        }
         #gameover {
             font-size:36px; 
             position: fixed; 
@@ -18,8 +22,9 @@
     </style>
 </head>
 <body>
+    <div id="counter"></div>
     <div id="gameover">Game Over ! <br />
-    <button onclick="location.reload();">Try again</button></div>  
+    <button onclick="location.reload(); isGameOver = false;">Try again</button></div>  
 
     <!-- Three.min.js -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.116.1/build/three.min.js"></script>
@@ -27,7 +32,7 @@
     <script src="GLTFLoader.js"></script>
 
     <script>
-        let renderer, camera, scene;
+        let renderer, camera, scene, isGameOver;
         let floor, sky, trunk, sphere, sphereSpeed, spike;
         let dirLight, ambLight, pointLight;
 
@@ -44,6 +49,9 @@
         let spherePositionY = 5;
         let spherePositionX = -1;
         let spherePositionZ = -3;
+
+        let counter = document.getElementById('counter');
+        let swipesLeft = 11;
 
         let gameOverScreen = document.getElementById('gameover');
         gameOverScreen.style.display = 'none';
@@ -94,16 +102,26 @@
             sky.rotation.x = -15;
             scene.add(sky);
 
-
-            trunk = new THREE.Mesh(
-                new THREE.BoxGeometry(7, 1000, 7), 
-                new THREE.MeshLambertMaterial({color: 0x8B4513})
-            );
-            trunk.position.set(0, 500, -15);
-            trunk.rotation.y = - Math.PI / 7;
-            trunk.castShadow = true;
-            trunk.receiveShadow = true;
-            scene.add(trunk);
+            //Trunk creation with holes in it.
+            let trunkPositionY = 3.5;
+            for (let i = 0 ; i < 3; i++) {
+                for(let i = 0; i < 3; i++) {
+                    for (let i = 0; i < 5; i++) {
+                        trunk = new THREE.Mesh(
+                            new THREE.BoxGeometry(7, 7, 7), 
+                            new THREE.MeshLambertMaterial({color: 0x8B4513})
+                        );
+                        trunk.position.set(0, trunkPositionY, -15);
+                        trunk.rotation.y = - Math.PI / 7;
+                        trunk.castShadow = true;
+                        trunk.receiveShadow = true;
+                        scene.add(trunk);
+                        trunkPositionY += 7;
+                    };
+                    trunkPositionY += 14;
+                };
+                trunkPositionY += 14;
+            };
 
             let texture = loader.load('https://tse2.mm.bing.net/th?id=OIP.x5S8SmTXkE2Jt9QbM6WHdAHaE8&pid=Api');
             sphere = new THREE.Mesh(
@@ -167,16 +185,20 @@
             let isSphereFree = false;
             sphereSpeed = 2;
             rotationSpeed = 1;
+            spikeReset = () => {
+                spike.position.set(-0.7, spherePositionY, -4);
+                spike.rotation.x = 0;
+            }
             sphereReset = () => {
                 sphere.position.set(spherePositionX, spherePositionY, spherePositionZ);
                 camera.position.set(0, spherePositionY, 0);
-                spike.position.set(-0.7, spherePositionY, -4);
-                spike.rotation.x = 0;
+                spikeReset();
                 sphereSpeed = 2;
                 rotationSpeed = 1;
             };
             sphereUp = () => {
                 if(isSphereFree === false) return;
+                if (isGameOver) return;
                 sphereSpeed -= 0.04;
                 rotationSpeed -= 0.02;
                 sphere.position.y += sphereSpeed;
@@ -192,34 +214,56 @@
                 requestAnimationFrame(sphereDown);
             };
 
-            //when swipe starts
-            // 4. on clique à nouveau : si la balle est libre, la balle est recapturée et se fige au niveau 
-            //où elle était.
-
-            // 1. on clique: si la balle est capturée, la fonction swipe s'active pour permettre l'événement 
-            //n°2, sinon 4.
+            //when swipe starts and when ball stops.
             window.addEventListener('mousedown', (event) => {
                 event.preventDefault();
                 if (isSphereFree) {
-                    isSphereFree = false;
-                    sphereReset();
+                    spherePositionY = sphere.position.y;
+                    if (spherePositionY > 35 && spherePositionY < 49
+                    || spherePositionY > 77 && spherePositionY < 91
+                    || spherePositionY > 133 && spherePositionY < 161
+                    || spherePositionY > 196 && spherePositionY < 210
+                    || spherePositionY > 245 && spherePositionY < 259
+                    || spherePositionY > 294 && spherePositionY < 322
+                    || spherePositionY > 357 && spherePositionY < 371
+                    || spherePositionY > 406 && spherePositionY < 420
+                    || spherePositionY > 455) { 
+                        return;
+                    } else if (swipesLeft === 0) {
+                        gameOver();
+                    } else {
+                        isSphereFree = false;
+                        sphereReset();
+                    };
                 } else {
                     swipe = true;
                 };
             });
             window.addEventListener('touchstart', (event) => {
                 if (isSphereFree) {
-                    isSphereFree = false;
                     spherePositionY = sphere.position.y;
-                    sphereReset();
+                    if (spherePositionY > 35 && spherePositionY < 49 
+                    || spherePositionY > 77 && spherePositionY < 98
+                    || spherePositionY > 133 && spherePositionY < 161
+                    || spherePositionY > 196 && spherePositionY < 210
+                    || spherePositionY > 245 && spherePositionY < 259
+                    || spherePositionY > 294 && spherePositionY < 322
+                    || spherePositionY > 357 && spherePositionY < 371
+                    || spherePositionY > 406 && spherePositionY < 420
+                    || spherePositionY > 455) { 
+                        return;
+                    }  else if (swipesLeft === 0) {
+                        gameOver();
+                    } else {
+                        isSphereFree = false;
+                        sphereReset();
+                    };
                 } else {
                     swipe = true;
                 };
             });
 
             //when swipping
-            // 2. on swipe en bas: si swipe est actif, la balle suit le mouvement de la souris et le tir se
-            //charge; sinon rien ne se passe.
             window.addEventListener('mousemove', swipeSphere = (event) => {
                 event.preventDefault();
                 if (swipe && event.pageY > canvasHeight / 2 && event.pageY < canvasHeight / 1.7) {
@@ -228,7 +272,7 @@
                     sphere.rotation.x += event.movementY / 100;
                     spike.rotation.x += event.movementY / 125;
                     spike.position.y -= event.movementY / 225;
-                }
+                } else if (isGameOver) return;
             });
             window.addEventListener('touchmove', swipeSphere = (event) => {
                 if (swipe && event.pageY > canvasHeight / 2 && event.pageY < canvasHeight / 1.7) {
@@ -238,13 +282,10 @@
                     spike.rotation.x += event.movementY / 125;
                     spike.position.y -= event.movementY / 225;
 
-                }
+                } else if (isGameOver) return;
             });
 
             //when swipe ends
-            // 3. on relache le bouton du click: si swipe est actif, la balle est libérée et s'éjecte vers le
-            //haut, le swipe se désactive pour empêcher la balle de suivre la souris ; sinon rien ne se passe.
-
             window.addEventListener('mouseup', swipeSphere = (event) => {
                 event.preventDefault();
                 if (swipe) {
@@ -253,7 +294,9 @@
                     swish.play();
                     zboing.play();
                     sphereReset();
+                    spikeReset();
                     sphereUp();
+                    swipesLeft --;
                 };
             });
             window.addEventListener('touchend', swipeSphere = (event) => {
@@ -263,7 +306,9 @@
                     swish.play();
                     zboing.play();
                     sphereReset();
+                    spikeReset();
                     sphereUp();
+                    swipesLeft --;
                 };
             });
 
@@ -273,7 +318,6 @@
             camera.updateProjectionMatrix();
         
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(devicePixelRatio);    
             }, false);
 
             animate();
@@ -284,15 +328,21 @@
 
             renderer.render(scene, camera);
 
-            if(sphere.position.y < 1.25) {
+            //Counter
+            counter.innerHTML = 'Swipes left: ' + swipesLeft;
+
+            if(sphere.position.y <= 0) {
                 gameOver();
             };
         }
         gameOver = () => {
             gameOverScreen.style.display = 'block';
-            sphere.position.y = 1.25;
-            camera.position.y = 1.25;
             sphere.rotation.x = 0;
+            isGameOver = true;
+            if (sphere.position.y <= 0) {
+                sphere.position.y = 0.5;
+                camera.position.y = 0.5;
+            };
         }
 
         init();
