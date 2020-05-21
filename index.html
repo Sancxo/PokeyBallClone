@@ -10,6 +10,7 @@
         #counter {
             font-size:36px; 
             position: fixed; 
+            text-shadow: white 0 1px, white 1px 0, white 0 -1px, white -1px 0;
         }
         #gameover {
             font-size:36px; 
@@ -22,6 +23,7 @@
     </style>
 </head>
 <body>
+    <!-- UI -->
     <div id="counter"></div>
     <div id="gameover">Game Over ! <br />
     <button onclick="location.reload(); isGameOver = false;">Try again</button></div>  
@@ -55,6 +57,7 @@
 
         let gameOverScreen = document.getElementById('gameover');
         gameOverScreen.style.display = 'none';
+
         init = () => {
             renderer = new THREE.WebGLRenderer({antialias: true, alpha: true });
             renderer.shadowMap.enabled = true;
@@ -72,6 +75,7 @@
             camera.position.set(0, spherePositionY, 0);
             camera.add(audioListener);
 
+            //Sounds
             let swish = new THREE.Audio(audioListener);
             scene.add(swish);
             audioLoader.load('swish-2.wav', function (audioBuffer) {
@@ -123,6 +127,7 @@
                 trunkPositionY += 14;
             };
 
+            //Ball
             let texture = loader.load('https://tse2.mm.bing.net/th?id=OIP.x5S8SmTXkE2Jt9QbM6WHdAHaE8&pid=Api');
             sphere = new THREE.Mesh(
                 new THREE.SphereGeometry(0.25, 32, 24),
@@ -144,7 +149,7 @@
             spike.castShadow = true;
             spike.receiveShadow = true;
 
-            //3D models
+            //random trees
             let firTree;
             for (let i = 0; i <= Math.random() * 10 + 1; i++) {
                 gltfLoader.load('fir_tree/scene.gltf', function(gltf) {
@@ -215,9 +220,9 @@
             };
 
             //when swipe starts and when ball stops.
+            //PC
             window.addEventListener('mousedown', (event) => {
                 event.preventDefault();
-                console.log(spherePositionY);
                 if (isSphereFree) {
                     spherePositionY = sphere.position.y;
                     if (spherePositionY > 35 && spherePositionY < 49
@@ -240,8 +245,9 @@
                     swipe = true;
                 };
             });
+            //Mobiles and touchpads
             window.addEventListener('touchstart', (event) => {
-                console.log(spherePositionY);
+                event.preventDefault();
                 if (isSphereFree) {
                     spherePositionY = sphere.position.y;
                     if (spherePositionY > 35 && spherePositionY < 49 
@@ -266,6 +272,7 @@
             });
 
             //when swipping
+            //PC
             window.addEventListener('mousemove', swipeSphere = (event) => {
                 event.preventDefault();
                 if (swipe && event.pageY > canvasHeight / 2 && event.pageY < canvasHeight / 1.7) {
@@ -276,7 +283,9 @@
                     spike.position.y -= event.movementY / 225;
                 } else if (isGameOver) return;
             });
+            //Mobiles & touchpads
             window.addEventListener('touchmove', swipeSphere = (event) => {
+                event.preventDefault();
                 if (swipe && event.pageY > canvasHeight / 2 && event.pageY < canvasHeight / 1.7) {
                     sphere.position.y -= event.movementY / 100;
                     sphere.position.z -= event.movementY / 100;
@@ -288,6 +297,7 @@
             });
 
             //when swipe ends
+            //PC
             window.addEventListener('mouseup', swipeSphere = (event) => {
                 event.preventDefault();
                 if (swipe) {
@@ -301,7 +311,9 @@
                     swipesLeft --;
                 };
             });
+            //Mobile & touchpads
             window.addEventListener('touchend', swipeSphere = (event) => {
+                event.preventDefault();
                 if (swipe) {
                     swipe = false;
                     isSphereFree = true;
@@ -317,8 +329,7 @@
             //if browser is resized
             window.addEventListener('resize', onWindowResize = () => {
             camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-        
+            camera.updateProjectionMatrix();       
             renderer.setSize(window.innerWidth, window.innerHeight);
             }, false);
 
@@ -337,6 +348,7 @@
                 gameOver();
             };
         }
+        
         gameOver = () => {
             gameOverScreen.style.display = 'block';
             sphere.rotation.x = 0;
