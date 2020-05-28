@@ -7,6 +7,35 @@
     <style>
         body {margin: 0; overflow: hidden;}
         canvas {height: 100%; width: 100%;}
+        #credits {
+            position: fixed;
+            display: flex;
+            top: 10px;
+            left: 10px;
+        }
+        #credits2  { 
+            position: fixed;
+            display: flex;
+            bottom: 10px;
+            right: 10px;
+        }
+        #credits p, #credits2 p {
+            margin: 2px;
+            color: black;
+        }
+        #credits p:hover, #credits2 p:hover {
+            cursor: default;
+        }
+        #credits button, #credits2 button {
+            margin: 2px;
+            border: solid black 1px;
+        }
+        #credits button:hover, #credits2 button:hover {
+            cursor: pointer;
+            transform: scale(1.1);
+            border-radius: 10px;
+            transition: transform 250ms, border-radius 250ms;
+        }
         #counter {
             font-size:36px; 
             position: fixed;
@@ -33,6 +62,14 @@
     </style>
 </head>
 <body>
+    <div id="credits">
+        <p>&copy; Made by Simon Tirant (alias Sancxo)</p>
+        <a href="https://github.com/Sancxo" target="_blank" title="See my GitHub profile"><button>GitHub</button></a>
+    </div>
+
+    <div id="credits2">
+        <p>Ressources : <a href="credits.html" title="Credits"><button>Credits</button></a></p></div>
+
     <!-- UI -->
     <div id="counter"></div>
     <div id="gameover">Game Over ! <br />
